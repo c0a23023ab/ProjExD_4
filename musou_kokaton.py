@@ -141,7 +141,7 @@ class Beam(pg.sprite.Sprite):
     """
     ビームに関するクラス
     """
-    def __init__(self, bird: Bird):
+    def __init__(self, bird: Bird, angle0 = 0):
         """
         ビーム画像Surfaceを生成する
         引数 bird：ビームを放つこうかとん
@@ -149,6 +149,8 @@ class Beam(pg.sprite.Sprite):
         super().__init__()
         self.vx, self.vy = bird.dire
         angle = math.degrees(math.atan2(-self.vy, self.vx))
+        base_angle = math.degrees(math.atan2(-self.vy, self.vx))
+        angle = base_angle + angle0
         self.image = pg.transform.rotozoom(pg.image.load(f"fig/beam.png"), angle, 2.0)
         self.vx = math.cos(math.radians(angle))
         self.vy = -math.sin(math.radians(angle))
@@ -165,6 +167,25 @@ class Beam(pg.sprite.Sprite):
         self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
         if check_bound(self.rect) != (True, True):
             self.kill()
+
+
+class NeoBeam:
+
+    def __init__(self, bird: Bird, num: int):
+        self.bird = bird
+        self.num = num
+
+    def gen_beams(self):
+        beams = []
+        if self.num == 1:
+            angles = [0]
+        else:
+            calc = int(100 / (self.num - 1))
+            angles = list(range(-50, 51, calc))
+        
+        for angle in angles:
+            beams.append(Beam(self.bird, angle0 = angle))
+        return beams
 
 
 class Explosion(pg.sprite.Sprite):
@@ -262,7 +283,14 @@ def main():
             if event.type == pg.QUIT:
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-                beams.add(Beam(bird))
+                if event.key == pg.K_SPACE:
+                    if key_lst[pg.K_LSHIFT]:
+                        num_beams = 5
+                        neo_beam = NeoBeam(bird, num_beams)
+                        beams.add(neo_beam.gen_beams())
+                    else:
+                        beams.add(Beam(bird))
+                
         screen.blit(bg_img, [0, 0])
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
@@ -309,3 +337,4 @@ if __name__ == "__main__":
     main()
     pg.quit()
     sys.exit()
+
