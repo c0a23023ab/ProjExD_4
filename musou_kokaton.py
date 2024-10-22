@@ -245,6 +245,13 @@ class Score:
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)
 
+class Gravity(pg.sprite.Sprite):
+    def __init__(self, life: int, xy: tuple[int, int]):
+        super().__init__()
+        self.image = pg.image.load("fig/gravity.png")
+        self.rect = self.image.get_rect()
+        self.rect.center = xy
+        self.life = life
 
 def main():
     pg.display.set_caption("真！こうかとん無双")
