@@ -234,12 +234,12 @@ class Score:
     敵機：10点
     """
     def __init__(self):
-        self.font = pg.font.Font(None, 50)
-        self.color = (0, 0, 255)
-        self.value = 200
-        self.image = self.font.render(f"Score: {self.value}", 0, self.color)
-        self.rect = self.image.get_rect()
-        self.rect.center = 100, HEIGHT-50
+            self.font = pg.font.Font(None, 50)
+            self.color = (0, 0, 255)
+            self.value = 0
+            self.image = self.font.render(f"Score: {self.value}", 0, self.color)
+            self.rect = self.image.get_rect()
+            self.rect.center = 100, HEIGHT-50
 
     def update(self, screen: pg.Surface):
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
@@ -261,13 +261,13 @@ class Gravity(pg.sprite.Sprite):
         self.life -= 1
         if self.life < 0:
             self.kill()
+        
 
 def main():
     pg.display.set_caption("真！こうかとん無双")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
     score = Score()
-
     bird = Bird(3, (900, 400))
     bombs = pg.sprite.Group()
     beams = pg.sprite.Group()
@@ -304,20 +304,19 @@ def main():
             score.value += 1  # 1点アップ
 
         
-        if key_lst[pg.K_RETURN] and score.value > 200: # 200点以上でENTERを押すと重力発生
+        if key_lst[pg.K_RETURN] and score.value > 200 and not grav: # 200点以上でENTERを押すと重力発生
             score.value -= 200
-            print("Gravity")
             grav.add(Gravity(400)) # 400フレーム間重力発生
+        if grav:
             for bomb in bombs:
                 if pg.sprite.spritecollideany(bomb, grav):
                     exps.add(Explosion(bomb, 50))  # 爆発エフェクトを追加
                     bomb.kill() # 爆弾を削除
 
-            for enemy in emys:
-                if pg.sprite.spritecollideany(enemy, grav):
-                    exps.add(Explosion(enemy, 50)) 
-                    enemy.kill()
-                    bird.change_img(6, screen)
+            key = True
+        else:
+            pass
+                
 
         
 
