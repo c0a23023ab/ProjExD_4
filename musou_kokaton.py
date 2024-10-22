@@ -94,6 +94,10 @@ class Bird(pg.sprite.Sprite):
             self.speed = 20
         else:
             self.speed = 10
+        if key_lst[pg.K_LSHIFT]:
+            self.speed = 20
+        else:
+            self.speed = 10
         sum_mv = [0, 0]
         for k, mv in __class__.delta.items():
             if key_lst[k]:
@@ -287,26 +291,36 @@ class Score:
     敵機：10点
     """
     def __init__(self):
-        self.font = pg.font.Font(None, 50)
-        self.color = (0, 0, 255)
-        self.value = 0
-        self.image = self.font.render(f"Score: {self.value}", 0, self.color)
-        self.rect = self.image.get_rect()
-        self.rect.center = 100, HEIGHT-50
+            self.font = pg.font.Font(None, 50)
+            self.color = (0, 0, 255)
+            self.value = 0
+            self.image = self.font.render(f"Score: {self.value}", 0, self.color)
+            self.rect = self.image.get_rect()
+            self.rect.center = 100, HEIGHT-50
 
     def update(self, screen: pg.Surface):
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)
 
 class Gravity(pg.sprite.Sprite):
-    def __init__(self, life: int, xy: tuple[int, int]):
+    """
+    重力発生に関するクラス
+    """
+    def __init__(self, life):
         super().__init__()
-        self.image = pg.image.load("fig/gravity.png")
-        self.rect = self.image.get_rect()
-        self.rect.center = xy
         self.life = life
+        self.image = pg.Surface((WIDTH, HEIGHT))
+        pg.draw.rect(self.image, (0, 0, 0), [0, 0, WIDTH, HEIGHT])
+        self.image.set_alpha(100)
+        self.rect = self.image.get_rect()
+    
+    def update(self):
+        self.life -= 1
+        if self.life < 0:
+            self.kill()
 
-# ここに既存の他のクラスの定義や関数などを配置します。
+
+
 
 class Shield(pg.sprite.Sprite):
     """防御壁（Shield）を生成するクラス"""
@@ -341,19 +355,20 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
     score = Score()
-
     bird = Bird(3, (900, 400))
     bombs = pg.sprite.Group()
     beams = pg.sprite.Group()
     shields = pg.sprite.Group()  # 防御壁用のグループ
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
+    grav = pg.sprite.Group()    
     emp = pg.sprite.Group()
 
     tmr = 0
     clock = pg.time.Clock()
     while True:
         key_lst = pg.key.get_pressed()
+
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return 0
@@ -396,6 +411,26 @@ def main():
         for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.value += 1  # 1点アップ
+
+        
+        if key_lst[pg.K_RETURN] and score.value > 200 and not grav: # 200点以上でENTERを押すと重力発生
+            score.value -= 200
+            grav.add(Gravity(400)) # 400フレーム間重力発生
+        if grav:
+            for bomb in bombs:
+                if pg.sprite.spritecollideany(bomb, grav):
+                    exps.add(Explosion(bomb, 50))  # 爆発エフェクトを追加
+                    bomb.kill() # 爆弾を削除
+
+            key = True
+        else:
+            pass
+                
+
+        
+
+
+
         
         for bomb in pg.sprite.groupcollide(bombs, shields, True, False).keys():
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
@@ -423,6 +458,8 @@ def main():
         bombs.draw(screen)
         exps.update()
         exps.draw(screen)
+        grav.update()
+        grav.draw(screen)
         shields.update(bird)  # 防御壁の更新
         shields.draw(screen)
         emp.update()
